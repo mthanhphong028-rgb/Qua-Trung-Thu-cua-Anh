@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quà Trung Thu của Anh 💖</title>
+<style>
+html,body{
+  margin:0;
+  height:100%;
+  overflow:hidden;
+  background:radial-gradient(circle at 50% 20%,#12002f,#03000f 85%);
+  font-family:"Quicksand",sans-serif;
+  color:#fff;
+}
+
+/* --- INTRO --- */
+#intro{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,20,0.9);
+  z-index:999;
+  opacity:1;
+  transition:opacity 1.5s ease;
+}
+#intro.hidden{opacity:0;pointer-events:none;}
+#typing{
+  font-size:2.2rem;
+  line-height:1.8;
+  text-align:center;
+  color:#fff;
+  text-shadow:0 0 5px #fff,0 0 10px #ff99ff,0 0 20px #ff66ff,0 0 40px #ff33cc,0 0 80px #ff0099;
+  animation:glow 1.8s ease-in-out infinite alternate;
+}
+@keyframes glow {
+  from {text-shadow:0 0 10px #fff,0 0 20px #ff99ff,0 0 40px #ff33cc;}
+  to {text-shadow:0 0 25px #fff,0 0 50px #ff66ff,0 0 100px #ff00cc;}
+}
+
+/* --- Nút bắt đầu --- */
+#startBtn{
+  margin-top:40px;
+  padding:12px 30px;
+  font-size:1.4rem;
+  border:none;
+  border-radius:40px;
+  background:linear-gradient(90deg,#ff55ff,#ff99ff);
+  color:#fff;
+  cursor:pointer;
+  opacity:0;
+  transform:scale(0.9);
+  transition:opacity 1.5s ease, transform 0.3s ease;
+  box-shadow:0 0 25px #ff99ff;
+  z-index:1000;
+}
+#startBtn.show{opacity:1;transform:scale(1);}
+#startBtn:hover{
+  background:linear-gradient(90deg,#ff99ff,#ff55ff);
+  box-shadow:0 0 40px #ff66ff;
+}
+
+/* --- ĐÈN LỒNG CHÍNH --- */
+.center{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  display:flex;
+  gap:80px;
+  z-index:20;
+  opacity:0;
+  transition:opacity 1.5s ease;
+}
+.lantern{
+  width:250px;
+  height:auto;
+  cursor:pointer;
+  filter:drop-shadow(0 0 30px #ffb6ff);
+  transition:transform 0.3s ease, filter 0.3s ease;
+}
+.lantern:hover{
+  transform:scale(1.1);
+  filter:drop-shadow(0 0 50px #ff9aff);
+}
+
+/* --- DÒNG CHỮ "Em hãy chọn..." --- */
+#chooseText{
+  position:absolute;
+  bottom:10%;
+  width:100%;
+  text-align:center;
+  font-size:1.6rem;
+  color:#ffb3ec;
+  text-shadow:0 0 20px #ff8ff3,0 0 40px #b56df5;
+  opacity:0;
+  transition:opacity 1.5s ease;
+  animation:float 3s ease-in-out infinite;
+}
+@keyframes float{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-10px);}
+}
+
+/* --- Canvas pháo hoa --- */
+canvas{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  z-index:1;
+  pointer-events:none;
+}
+.center{z-index:20;}
+#chooseText{z-index:25;}
+</style>
+</head>
+<body>
+<audio id="bgm" src="a.mp3" loop></audio>
+
+<!-- INTRO -->
+<div id="intro">
+  <div id="typing"></div>
+  <button id="startBtn">✨ Bắt đầu ✨</button>
+</div>
+
+<!-- Đèn lồng -->
+<div class="center" id="lanternGroup">
+  <img class="lantern" id="lantern1" src="images/lantern1.png" alt="Đèn sư tử">
+  <img class="lantern" id="lantern2" src="images/lantern2.png" alt="Đèn trăng">
+  <img class="lantern" id="lantern3" src="images/lantern3.png" alt="Đèn thỏ">
+</div>
+
+<p id="chooseText">Em hãy chọn một chiếc đèn nhé 💖</p>
+<canvas id="fireCanvas"></canvas>
+
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+  const text="Gửi đến em – món quà Trung Thu anh dành riêng cho em 💖";
+  const typingEl=document.getElementById("typing");
+  const btn=document.getElementById("startBtn");
+  let i=0;
+  function type(){
+    if(i<text.length){
+      typingEl.textContent+=text.charAt(i);
+      i++;setTimeout(type,70);
+    }else setTimeout(()=>btn.classList.add("show"),1000);
+  } type();
+
+  const bgm=document.getElementById("bgm");
+  bgm.volume=0;
+  function fadeInAudio(){
+    let v=0;
+    bgm.play().catch(()=>{});
+    const t=setInterval(()=>{
+      v+=0.02;
+      if(v>=1){v=1;clearInterval(t);}
+      bgm.volume=v;
+    },100);
+  }
+  btn.onclick=()=>{
+    fadeInAudio();
+    document.getElementById("intro").classList.add("hidden");
+    setTimeout(()=>{
+      document.getElementById("lanternGroup").style.opacity="1";
+      document.getElementById("chooseText").style.opacity="1";
+    },1500);
+  };
+
+  // === phần pháo hoa ===
+  const c=document.getElementById("fireCanvas"),ctx=c.getContext("2d");
+  c.width=innerWidth;c.height=innerHeight;
+  const lantern1=document.getElementById("lantern1");
+  const group=document.getElementById("lanternGroup");
+  const txt=document.getElementById("chooseText");
+  const img=new Image();img.src="images/lantern-fall.png";
+  let fw=[],fall=[];
+
+  class Particle{
+    constructor(x,y,col){
+      this.x=x;this.y=y;
+      this.vx=(Math.random()-0.5)*10;
+      this.vy=(Math.random()-0.5)*10;
+      this.a=1;this.c=col;
+      this.r=2+Math.random()*1.5;
+    }
+    u(){this.x+=this.vx;this.y+=this.vy;this.vy+=0.05;this.a-=0.01;}
+    d(){ctx.globalAlpha=this.a;
+      ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+      ctx.fillStyle=this.c;ctx.fill();ctx.globalAlpha=1;}
+  }
+
+  function explode(x,y){
+    for(let i=0;i<150;i++){
+      fw.push(new Particle(x,y,`hsl(${Math.random()*360},100%,60%)`));
+    }
+  }
+
+  function heart(x,y){
+    for(let i=0;i<800;i++){
+      const t=Math.random()*Math.PI*2;
+      const hx=16*Math.pow(Math.sin(t),3);
+      const hy=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+      const s=Math.random()*10+5;
+      fw.push(new Particle(x+hx*s,y+hy*s,"#ff3366"));
+    }
+  }
+
+  function fallLanterns(){
+    for(let i=0;i<60;i++)
+      fall.push({x:Math.random()*c.width,y:Math.random()*-c.height,s:40+Math.random()*40,v:1+Math.random()*2,a:1});
+  }
+
+  function drawFall(){
+    if(!img.complete)return;
+    for(let i=fall.length-1;i>=0;i--){
+      const l=fall[i];
+      l.y+=l.v;l.a-=0.001;
+      if(l.a<=0)fall.splice(i,1);
+      else{ctx.globalAlpha=l.a;ctx.drawImage(img,l.x,l.y,l.s,l.s);}
+    }
+    ctx.globalAlpha=1;
+  }
+
+  function loop(){
+    ctx.fillStyle="rgba(0,0,25,0.25)";
+    ctx.fillRect(0,0,c.width,c.height);
+    for(let i=fw.length-1;i>=0;i--){
+      const p=fw[i];p.u();p.d();
+      if(p.a<=0)fw.splice(i,1);
+    }
+    drawFall();
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  lantern1.onclick=()=>{
+    group.style.opacity="0";txt.style.opacity="0";
+    setTimeout(()=>{
+      for(let i=0;i<45;i++){
+        setTimeout(()=>{ explode(Math.random()*c.width,Math.random()*c.height/1.5); },i*120);
+      }
+      setTimeout(()=>heart(c.width/2,c.height/2),5000);
+      fallLanterns();
+      setTimeout(()=>{ group.style.opacity="1"; txt.style.opacity="1"; },8500);
+    },600);
+  };
+});
+
+// === PHẦN 3: ĐÈN TRĂNG - TRÁI TIM 3D NÂNG CẤP ===
+const lantern2=document.getElementById("lantern2");
+const chooseText=document.getElementById("chooseText");
+const lanternGroup=document.getElementById("lanternGroup");
+
+// tạo phần giao diện ẩn
+const moonScene=document.createElement("div");
+moonScene.id="moonScene";
+moonScene.innerHTML=`
+  <div id="heart3D"></div>
+  <button id="backBtn">⟵ Quay lại</button>
+`;
+document.body.appendChild(moonScene);
+
+// thêm CSS
+const moonStyle=document.createElement("style");
+moonStyle.textContent=`
+#moonScene{
+  position:fixed;
+  inset:0;
+  background:url('images/galaxy-bg.jpg') center/cover no-repeat;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  perspective:1000px;
+  z-index:50;
+  overflow:hidden;
+}
+#heart3D{
+  position:relative;
+  width:800px;
+  height:800px;
+  transform-style:preserve-3d;
+  transition:transform 0.3s ease;
+}
+#heart3D img{
+  position:absolute;
+  width:100px;
+  height:100px;
+  object-fit:cover;
+  border-radius:15px;
+  box-shadow:0 0 20px #ff99ff;
+  transition:transform 0.3s;
+}
+#backBtn{
+  position:fixed;
+  top:20px;left:20px;
+  padding:10px 20px;
+  font-size:1.1rem;
+  background:rgba(255,150,255,0.2);
+  border:1px solid #ff99ff;
+  color:#fff;
+  border-radius:10px;
+  cursor:pointer;
+  z-index:60;
+}
+#backBtn:hover{background:rgba(255,150,255,0.35);}
+`;
+document.head.appendChild(moonStyle);
+
+// tạo ảnh trái tim + rải rác
+const heartEl=moonScene.querySelector("#heart3D");
+const images=[];
+for(let i=1;i<=10;i++) images.push(`images/example${i}.jpg`);
+
+const totalHeart=100;
+const totalRandom=50;
+
+// ảnh trái tim
+for(let i=0;i<totalHeart;i++){
+  const img=document.createElement("img");
+  img.src=images[i % images.length];
+  heartEl.appendChild(img);
+  const t=i/totalHeart;
+  const angle=t*Math.PI*2;
+  let x=16*Math.pow(Math.sin(angle),3)*25 + (Math.random()*20-10);
+  let y=-(13*Math.cos(angle)-5*Math.cos(2*angle)-2*Math.cos(3*angle)-Math.cos(4*angle))*25 + (Math.random()*20-10);
+  let z=Math.random()*60-30;
+  img.style.transform=`translate3d(${x}px,${y}px,${z}px)`;
+}
+
+// ảnh rải rác
+for(let i=0;i<totalRandom;i++){
+  const img=document.createElement("img");
+  img.src=images[i % images.length];
+  heartEl.appendChild(img);
+  const x=Math.random()*1200-600;
+  const y=Math.random()*800-400;
+  const z=Math.random()*400-200;
+  img.style.transform=`translate3d(${x}px,${y}px,${z}px)`;
+}
+
+// xoay + zoom chậm
+let rotX=0,rotY=0,zoom=1,drag=false,lastX=0,lastY=0;
+let autoRot=0;
+
+heartEl.addEventListener("mousedown",e=>{
+  drag=true; lastX=e.clientX; lastY=e.clientY;
+});
+document.addEventListener("mouseup",()=>drag=false);
+document.addEventListener("mousemove",e=>{
+  if(!drag) return;
+  const dx=e.clientX-lastX, dy=e.clientY-lastY;
+  rotY+=dx*0.5; rotX-=dy*0.5;
+  lastX=e.clientX; lastY=e.clientY;
+});
+document.addEventListener("wheel", e=>{
+  zoom += e.deltaY*-0.0003;
+  zoom=Math.min(Math.max(zoom,0.5),2.5);
+});
+
+// animate trái tim
+function animateHeart(){
+  autoRot += 0.1;
+  heartEl.style.transform=`rotateX(${rotX}deg) rotateY(${rotY+autoRot}deg) scale(${zoom})`;
+  requestAnimationFrame(animateHeart);
+}
+animateHeart();
+
+// quay lại
+moonScene.querySelector("#backBtn").addEventListener("click",()=>{
+  moonScene.style.display="none";
+  lanternGroup.style.opacity="1";
+  chooseText.style.opacity="1";
+});
+
+// click đèn trăng
+lantern2.addEventListener("click",()=>{
+  lanternGroup.style.opacity="0";
+  chooseText.style.opacity="0";
+  setTimeout(()=>{ moonScene.style.display="flex"; },800);
+});
+</script>
+<!-- PHẦN 4: ĐÈN LỒNG THỎ - BÁNH TRUNG THU -->
+<div id="rabbitScene" style="display:none; position:fixed; inset:0; background:url('images/bg_moon.jpg') center/cover no-repeat;
+ justify-content:center; align-items:center; z-index:50;">
+  <div id="moonMid" style="position:relative; width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;">
+    <canvas id="heartCanvas" width="360" height="360" style="position:absolute;"></canvas>
+    <div id="bunsContainer" style="position:absolute; width:360px; height:360px;"></div>
+  </div>
+  <button id="backRabbit" style="position:fixed; top:20px; left:20px; padding:10px 20px; font-size:1rem; background:rgba(255,255,255,0.2); border:1px solid #fff; color:#000; border-radius:10px; cursor:pointer; z-index:60;">⟵ Quay lại</button>
+</div>
+
+<script>
+const lantern3 = document.getElementById("lantern3");
+const rabbitScene = document.getElementById("rabbitScene");
+const bunsContainer = document.getElementById("bunsContainer");
+const heartCanvas = document.getElementById("heartCanvas");
+const ctxHeart = heartCanvas.getContext("2d");
+const backRabbit = document.getElementById("backRabbit");
+
+const totalBuns = 15;
+const bunImages = [];
+for(let i=1;i<=15;i++) bunImages.push(`images/mooncake${i}.png`);
+const heartBuns = [];
+const connectDots = [];
+
+function generateHeartPositions(){
+  heartBuns.length = 0;
+  connectDots.length = 0;
+  const w = heartCanvas.width/2;
+  const h = heartCanvas.height/2;
+
+  const totalDots = 300; 
+  const scale = heartCanvas.width / 20; // giảm để trái tim nhỏ gọn hơn cho điện thoại
+  for(let i=0;i<totalDots;i++){
+    const t = Math.PI - (i/(totalDots-1))*2*Math.PI;
+    const x = 16*Math.pow(Math.sin(t),3);
+    const y = -(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
+    connectDots.push({x:w+x*scale, y:h+y*scale});
+  }
+
+  const step = Math.floor(totalDots / totalBuns);
+  for(let i=0;i<totalBuns;i++){
+    const idx = i*step + Math.floor(step/2);
+    heartBuns.push(connectDots[idx]);
+  }
+}
+
+function drawConnectDots(){
+  ctxHeart.clearRect(0,0,heartCanvas.width,heartCanvas.height);
+  ctxHeart.fillStyle="#fff";
+  ctxHeart.strokeStyle="#fff";
+  ctxHeart.lineWidth = 2;
+
+  for(let i=0;i<connectDots.length-1;i++){
+    const p1 = connectDots[i];
+    const p2 = connectDots[i+1];
+
+    let nearBun = false;
+    for(const bun of heartBuns){
+      if(Math.hypot(p1.x-bun.x, p1.y-bun.y)<25 || Math.hypot(p2.x-bun.x, p2.y-bun.y)<25){
+        nearBun = true; break;
+      }
+    }
+    if(nearBun) continue;
+
+    ctxHeart.beginPath();
+    ctxHeart.arc(p1.x,p1.y,1.5,0,Math.PI*2);
+    ctxHeart.fill();
+
+    ctxHeart.beginPath();
+    ctxHeart.moveTo(p1.x,p1.y);
+    ctxHeart.lineTo(p2.x,p2.y);
+    ctxHeart.stroke();
+  }
+
+  const last = connectDots[connectDots.length-1];
+  ctxHeart.beginPath();
+  ctxHeart.arc(last.x,last.y,2,0,Math.PI*2);
+  ctxHeart.fill();
+}
+
+function renderBuns(){
+  bunsContainer.innerHTML="";
+  heartBuns.forEach((pos,i)=>{
+    const img = document.createElement("img");
+    img.src = bunImages[i % bunImages.length];
+    img.style.width="110px";
+    img.style.height="110px";
+    img.style.position="absolute";
+    img.style.left = (pos.x-20)+"px";
+    img.style.top = (pos.y-20)+"px";
+    img.style.cursor="pointer";
+    img.style.zIndex=10;
+    bunsContainer.appendChild(img);
+
+    img.onclick = ()=>{ openBunPopup(i); }
+  });
+}
+
+function openBunPopup(i){
+  const popup = document.createElement("div");
+  popup.style.position="fixed";
+  popup.style.inset="0";
+  popup.style.background="rgba(255,255,255,1)";
+  popup.style.display="flex";
+  popup.style.justifyContent="center";
+  popup.style.alignItems="center";
+  popup.style.zIndex=100;
+  popup.style.flexDirection="column";
+
+  const messages = [
+    "Gửi ngàn lời yêu thương vào gió, mong gió khẽ thì thầm: Anh nhớ em nhiều lắm, cô gái à",
+    "Cảm ơn em đã đến, để trái tim anh biết thế nào là thương, là nhớ, là yêu thật sự",
+    "Mong em luôn vui vẻ, vì mỗi khi em buồn là anh phải dỗ, mà dỗ em xong anh toàn “mệt tim”",
+    "Em ăn cơm chưa=))))))",
+    "Hôm nay anh không chúc em gì nhiều, chỉ mong em nhớ rằng… block anh là tội ác lớn nhất",
+    "I lov uuuu.... nhớ em ghê, thèm ăn em lắm rui huhu",
+    "Gửi em chút gió, chút nắng và thật nhiều yêu thương, mong em luôn bình yên nơi trái tim anh",
+    "Dù ngày mai có ra sao, anh chỉ muốn cùng em đi qua hết những năm tháng thanh xuân",
+    "Mặc dù là quà trung thu muộn, cũng không có đẹp lắm, nhưng mong em hãy trân trọng nhaaaa",
+    "Bbi yêu anh đi, đừn có yêu mực nữa",
+    "Không có gì đâu=))))",
+    "Tự nhiên muốn nói: “Chúc em hạnh phúc” dù hạnh phúc đó… tốt nhất nên có anh trong đó nha 😏",
+    "Nhìn cgi mà nhìn, thích nhìn kh móc mắt rờ",
+    "Hôm nay trời đẹp nên anh chúc em xinh hơn nhưng nhớ là vẫn phải kém anh một bậc nha 😉",
+    "Em biết không, mỗi lần anh thấy em nhăn mặt là anh biết… chắc anh tại đáng yêu quá nên em chịu không nổi 😌"
+  ];
+
+  const msg = document.createElement("div");
+  msg.textContent = messages[i % messages.length];
+ msg.style.fontSize = "3rem";   // 👉 tăng kích thước chữ (2.5–4rem tùy ý)
+msg.style.fontWeight = "700";
+msg.style.color = "#000";
+msg.style.textAlign = "center";
+msg.style.margin = "40px";
+msg.style.lineHeight = "1.4";
+msg.style.maxWidth = "90%";
+msg.style.wordWrap = "break-word";
+popup.appendChild(msg);
+
+  // thêm sticker ngẫu nhiên quanh popup
+  for(let s=0;s<25;s++){
+    const st = document.createElement("img");
+    st.src = `images/sticker${(s%5)+1}.png`;
+    st.style.width = (25+Math.random()*20)+"px";
+    st.style.position = "absolute";
+    st.style.left = Math.random()*window.innerWidth + "px";
+    st.style.top = Math.random()*window.innerHeight + "px";
+    st.style.transform = `rotate(${Math.random()*360}deg)`;
+    popup.appendChild(st);
+  }
+
+  popup.onclick = ()=>{ popup.remove(); }
+
+  document.body.appendChild(popup);
+}
+
+lantern3.addEventListener("click",()=>{
+  lanternGroup.style.opacity="0";
+  chooseText.style.opacity="0";
+  rabbitScene.style.display="flex";
+  generateHeartPositions();
+  drawConnectDots();
+  renderBuns();
+});
+
+backRabbit.addEventListener("click",()=>{
+  rabbitScene.style.display="none";
+  lanternGroup.style.opacity="1";
+  chooseText.style.opacity="1";
+});
+</script>
+</body>
+</html>
